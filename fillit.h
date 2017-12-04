@@ -22,8 +22,8 @@ typedef	struct			s_tetris
 {
 	char				**tetriminos;
 	unsigned int		number;
-	int					height;
-	int					width;
+	unsigned int		height;
+	unsigned int		width;
 	struct s_tetris		*next;
 }						t_tetris;
 

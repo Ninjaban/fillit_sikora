@@ -16,6 +16,11 @@ typedef void *			t_pvoid;
 typedef char *			t_pchar;
 typedef unsigned int	t_uint;
 
+typedef const char			t_cbool;
+typedef const void *		t_cpvoid;
+typedef const char *		t_cpchar;
+typedef const unsigned int	t_cuint;
+
 typedef struct
 {
 	t_uint			size;

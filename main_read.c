@@ -5,30 +5,30 @@
 #include <unistd.h>			/* |read()| */
 #include <stdlib.h>			/* |malloc()| */
 #include <string.h>			/* |strlen()|, |memset()|, |memcpy()| */
-#include <sys/types.h>		/* |open()| */
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <fcntl.h>			/* |open()| */
 
 #include "types.h"
 #include "error.h"
 
 #include "fillit.h"
 
+#include "read_main.h"
+
 
 #define		TETRIMINOS_MAX_PER_FILE		(t_uint)26
 #define		TETRIMINOS_NB_CHAR			(t_uint)21
 #define		MALLOC_SIZE					(t_uint)(TETRIMINOS_MAX_PER_FILE * TETRIMINOS_NB_CHAR)
 
-#define		READ_COUNT		(21)
+#define		READ_COUNT		(t_uint)21
 
 /* -- library_configuration */
 static struct
 {
-	t_bool			initialized;
+	t_bool		initialized;
 
-	t_bool			debug_mode;
+	t_bool		debug_mode;
 
-	t_buffer		filename;
+	t_pchar		filename;
 } internal_context = {
 	.initialized	= FALSE,
 
@@ -63,7 +63,87 @@ static void			internal_context_initialize (void)
 {
 	internal_context.initialized = TRUE;
 
-	BUFFER_CLEAR (internal_context.filename);
+	internal_context.filename = NULL;
+}
+
+
+static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_content,
+																t_cuint				in_tetriminos_id,
+																t_tetris			**out_tetriminos_lst,
+																t_failure_code		*out_failure_code)
+{
+	t_tetris		*tetriminos_lst;
+	t_uint			tetriminos_point[4];
+	t_uint			i;
+
+
+	/* init tetriminos_lst */
+	if (! (tetriminos_lst = malloc (sizeof (t_tetris))))
+	{
+		FT_ERROR("malloc() failed %" PRIu64, sizeof (t_tetris));
+
+		*out_failure_code = FAILURE_CODE_FATAL;
+		return FALSE;
+	}
+	tetriminos_lst->tetriminos = NULL;
+	tetriminos_lst->number = in_tetriminos_id;
+	tetriminos_lst->height = 0;
+	tetriminos_lst->width = 0;
+	tetriminos_lst->next = NULL;
+
+
+	/* get tetrimino size */
+	i = 0;
+	while (i < 20)
+	{
+		if (in_file_content[i] == '#')
+		i = i + 1;
+	}
+
+
+	/* init char ** */
+	if (! (tetriminos_lst->tetriminos = malloc(sizeof (char *) * tetriminos_lst->height)))
+	{
+		FT_ERROR("malloc() failed %" PRIu64, sizeof (char *) * tetriminos_lst->height);
+
+		*out_failure_code = FAILURE_CODE_FATAL;
+		return FALSE;
+	}
+
+	i = 0;
+	while (i != tetriminos_lst->height)
+	{
+		if (! (tetriminos_lst->tetriminos[i] = malloc(tetriminos_lst->width)))
+		{
+			FT_ERROR("malloc() failed %d", tetriminos_lst->width);
+
+			*out_failure_code = FAILURE_CODE_FATAL;
+			return FALSE;
+		}
+		memset (tetriminos_lst->tetriminos[i], '.', tetriminos_lst->width);
+
+		i = i + 1;
+	}
+
+
+
+
+	if (in_file_content[20] == '\n')
+	{
+		if (!internal_stock_file_content_in_tetris_list(in_file_content + 21, in_tetriminos_id + 1, &tetriminos_lst->next, out_failure_code))
+		{
+			FT_WARNING (
+					"internal_stock_file_content_in_tetris_list() failed id %d content {%.*s}",
+					in_tetriminos_id + 1, 21, in_file_content);
+
+			/* out_failure_code is set in the internal function */
+			return FALSE;
+		}
+	}
+
+	*out_tetriminos_lst = tetriminos_lst;
+
+	return TRUE;
 }
 
 
@@ -77,27 +157,27 @@ static void			internal_context_initialize (void)
  *
  * @return
  */
-static t_bool		internal_ft_read (t_tetris				*out_tetriminos_lst,
+static t_bool		internal_ft_read (t_tetris				**out_tetriminos_lst,
 									  t_failure_code		*out_failure_code)
 {
 	int				file_descriptor;
 	t_pchar			file_content;
-	t_uint			file_content_size;
+	ssize_t			file_content_size;
 	char			read_buf[ READ_COUNT + 1 ];
-	int				read_ret;
-	t_tetris		tetriminos_lst;
+	ssize_t			read_ret;
+	t_tetris		*tetriminos_lst;
 
 
 	/* Read part*/
 	if ((file_descriptor = open (internal_context.filename, O_RDONLY)))
 	{
-		FT_ERROR ("open() failed filename {%.*s}", (int)internal_context.filename.size, internal_context.filename.bytes);
+		FT_ERROR ("open() failed filename %s", internal_context.filename);
 
 		*out_failure_code = FAILURE_CODE_FATAL;
 		return FALSE;
 	}
 
-	if (file_content = malloc (MALLOC_SIZE))
+	if (! (file_content = malloc (MALLOC_SIZE)))
 	{
 		FT_ERROR ("malloc() failed size %" PRIu64, MALLOC_SIZE);
 
@@ -110,7 +190,8 @@ static t_bool		internal_ft_read (t_tetris				*out_tetriminos_lst,
 	while ((read_ret = read (file_descriptor, read_buf, READ_COUNT)) > 0)
 	{
 		read_buf[read_ret] = '\0';
-		memcpy (file_content + file_content_size, read_buf, read_ret);
+		memcpy (file_content + file_content_size, read_buf, (size_t)read_ret);
+		file_content_size = file_content_size + read_ret;
 	}
 
 	if (read_ret == -1)
@@ -121,12 +202,23 @@ static t_bool		internal_ft_read (t_tetris				*out_tetriminos_lst,
 		return FALSE;
 	}
 
+	FT_DEBUG("file_content %s", file_content);
 
 	/* //TEMP CHECK CONTENT AND SEE IF IT'S VALID HERE */
 
 
 	/* Stock part */
+	tetriminos_lst = NULL;
+	if (! internal_stock_file_content_in_tetris_list (file_content, 1, &tetriminos_lst, out_failure_code))
+	{
+		FT_WARNING ("internal_stock_file_content_in_tetris_list() failed id %d content {%.*s}", 1, 21, file_content);
 
+		*out_failure_code = READ_MAIN__FT_READ__STOCK_FAILED;
+		return FALSE;
+	}
+
+
+	*out_tetriminos_lst = tetriminos_lst;
 
 	*out_failure_code = FAILURE_CODE_NONE;
 
@@ -145,8 +237,8 @@ static t_bool		internal_ft_read (t_tetris				*out_tetriminos_lst,
  *
  * @return TRUE in success, FALSE otherwise
  */
-extern t_bool		ft_read (t_tetris			*out_tetriminos_lst,
-							 t_failure_code		out_failure_code)
+extern t_bool		ft_read (t_tetris			**out_tetriminos_lst,
+							 t_failure_code		*out_failure_code)
 {
 	/* basic check */
 	if (out_failure_code == NULL)
@@ -161,7 +253,7 @@ extern t_bool		ft_read (t_tetris			*out_tetriminos_lst,
 	{
 		FT_ERROR ("out_tetriminos_lst %p", (void *)out_tetriminos_lst);
 
-		out_failure_code = FAILURE_CODE_NULL_PARAMETER;
+		*out_failure_code = FAILURE_CODE_NULL_PARAMETER;
 		return FALSE;
 	}
 	*out_tetriminos_lst = NULL;
@@ -190,7 +282,37 @@ extern t_bool		ft_read (t_tetris			*out_tetriminos_lst,
 }
 
 
-extern t_bool		ft_read_initialize (const t_pchar		in_filename,
+extern t_bool		ft_read_finalize (t_failure_code		*out_failure_code)
+{
+	/* basic check */
+	if (out_failure_code == NULL)
+	{
+		FT_ERROR ("out_failure_code %p", (void *)out_failure_code);
+
+		return FALSE;
+	}
+	*out_failure_code = FAILURE_CODE_UNDEFINED;
+
+	if (! internal_context_is_initialize ())
+	{
+		FT_ERROR ("internal_context_is_initialized() %s", "failed");
+
+		*out_failure_code = READ_MAIN__FT_READ_FINALIZE__NOT_INITIALIZE;
+		return FALSE;
+	}
+
+
+	free (internal_context.filename);
+
+	internal_context_initialize ();
+
+	internal_context.initialized = FALSE;
+
+	return TRUE;
+}
+
+
+extern t_bool		ft_read_initialize (t_cpchar			in_filename,
 										t_failure_code		*out_failure_code)
 {
 	/* basic check */
@@ -206,13 +328,32 @@ extern t_bool		ft_read_initialize (const t_pchar		in_filename,
 	{
 		FT_ERROR ("in_filename %p", (void *)in_filename);
 
-		out_failure_code = FAILURE_CODE_NULL_PARAMETER;
+		*out_failure_code = FAILURE_CODE_NULL_PARAMETER;
 		return FALSE;
 	}
 
+	if (internal_context_is_initialize ())
+	{
+		FT_ERROR ("internal_context_is_initialized() %s", "failed");
+
+		*out_failure_code = READ_MAIN__FT_READ_INITIALIZE__ALREADY_INITIALIZE;
+		return FALSE;
+	}
+
+
 	internal_context_initialize ();
 
-	BUFFER_SETUP (internal_context.filename, strlen (in_filename), in_filename);
+	if (! (internal_context.filename = malloc (strlen (in_filename))))
+	{
+		FT_ERROR ("malloc() failed size %" PRIu64, strlen (in_filename));
+
+		*out_failure_code = FAILURE_CODE_FATAL;
+		return FALSE;
+	}
+	internal_context.filename = memcpy(internal_context.filename, in_filename, strlen(in_filename));
+
+	/* //TEMP Debug mode on */
+	internal_context.debug_mode = TRUE;
 
 
 	*out_failure_code = FAILURE_CODE_NONE;
