@@ -160,7 +160,7 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 	}
 
 
-	FT_DEBUG("tetriminos struct {number %" PRIu32 ", height %" PRIu32 ", width %" PRIu32, tetriminos_lst->number, tetriminos_lst->height, tetriminos_lst->width);
+	FT_DEBUG("tetriminos struct {number %" PRIu32 ", height %" PRIu32 ", width %" PRIu32 "}", tetriminos_lst->number, tetriminos_lst->height, tetriminos_lst->width);
 
 	if (in_file_content[20] == '\n')
 	{
@@ -203,7 +203,7 @@ static t_bool		internal_ft_read (t_tetris				**out_tetriminos_lst,
 
 
 	/* Read part*/
-	if ((file_descriptor = open (internal_context.filename, O_RDONLY)))
+	if ((file_descriptor = open (internal_context.filename, O_RDONLY)) == -1)
 	{
 		FT_ERROR ("open() failed filename %s", internal_context.filename);
 
@@ -213,7 +213,7 @@ static t_bool		internal_ft_read (t_tetris				**out_tetriminos_lst,
 
 	if (! (file_content = malloc (MALLOC_SIZE)))
 	{
-		FT_ERROR ("malloc() failed size %" PRIu64, MALLOC_SIZE);
+		FT_ERROR ("malloc() failed size %" PRIu32, MALLOC_SIZE);
 
 		*out_failure_code = FAILURE_CODE_FATAL;
 		return FALSE;
