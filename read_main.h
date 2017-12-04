@@ -8,6 +8,34 @@
 #include "file_id.h"
 #include "error.h"
 
+/* ft_read_initialize()
+ *
+ * Initialize this file
+ *
+ * The function fails (return FALSE) in the following successive cases:
+ * - the internal_context already exist (READ_MAIN__FT_READ_INITIALIZE__ALREADY_INITIALIZE)
+ */
+
+#define READ_MAIN__FT_READ_INITIALIZE__ALREADY_INITIALIZE		FAILURE_CODE_FORMAT(FILLIT_READ_MAIN_ID, 1, 1)
+
+t_bool		ft_read_initialize (t_cpchar			in_filename,
+								t_failure_code		*out_failure_code);
+
+
+/* ft_read_finalize()
+ *
+ * Finalize this file
+ *
+ * The function fails (return FALSE) in the following successive cases:
+ * - the internal_context doesn't exist (READ_MAIN__FT_READ_FINALIZE__NOT_INITIALIZE)
+ */
+
+#define READ_MAIN__FT_READ_FINALIZE__NOT_INITIALIZE		FAILURE_CODE_FORMAT(FILLIT_READ_MAIN_ID, 2, 1)
+
+t_bool		ft_read_finalize (t_failure_code		*out_failure_code);
+
+
+
 /* ft_read()
  *
  * This function read a file and stock the content in a list

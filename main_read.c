@@ -74,7 +74,10 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 {
 	t_tetris		*tetriminos_lst;
 	t_uint			tetriminos_point[4];
+	t_uint 			tetriminos_point_min;
+	t_uint 			tetriminos_point_max;
 	t_uint			i;
+	t_uint			n;
 
 
 	/* init tetriminos_lst */
@@ -94,11 +97,28 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 
 	/* get tetrimino size */
 	i = 0;
+	n = 0;
 	while (i < 20)
 	{
 		if (in_file_content[i] == '#')
+			tetriminos_point[n++] = i;
 		i = i + 1;
 	}
+	tetriminos_lst->height = (tetriminos_point[3] - tetriminos_point[0]) / 5 + 1;
+
+	n = 0;
+	tetriminos_point_max = 0;
+	tetriminos_point_min = 4;
+	while (n < 4)
+	{
+		tetriminos_point[n] = tetriminos_point[n] % 5;
+		if (tetriminos_point[n] > tetriminos_point_max)
+			tetriminos_point_max = tetriminos_point[n];
+		if (tetriminos_point[n] < tetriminos_point_min)
+			tetriminos_point_min = tetriminos_point[n];
+		n = n + 1;
+	}
+	tetriminos_lst->width = tetriminos_point_max - tetriminos_point_min + 1;
 
 
 	/* init char ** */
@@ -126,7 +146,21 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 	}
 
 
+	/* set char ** */
+	i = 0;
+	n = 0;
+	while (n < 4)
+	{
+		if (n != 0 && tetriminos_point[n] <= tetriminos_point[n - 1])
+			i = i + 1;
 
+		tetriminos_lst->tetriminos[i][tetriminos_point[n]] = '#';
+
+		n = n + 1;
+	}
+
+
+	FT_DEBUG("tetriminos struct {number %" PRIu32 ", height %" PRIu32 ", width %" PRIu32, tetriminos_lst->number, tetriminos_lst->height, tetriminos_lst->width);
 
 	if (in_file_content[20] == '\n')
 	{
@@ -282,6 +316,16 @@ extern t_bool		ft_read (t_tetris			**out_tetriminos_lst,
 }
 
 
+/**
+* Finalize this file
+*
+* @param out_failure_code
+*
+* @error out_failure_code is null
+* @error internal_context_is_initialize() failed
+*
+* @return TRUE in success, FALSE otherwise
+*/
 extern t_bool		ft_read_finalize (t_failure_code		*out_failure_code)
 {
 	/* basic check */
@@ -311,7 +355,19 @@ extern t_bool		ft_read_finalize (t_failure_code		*out_failure_code)
 	return TRUE;
 }
 
-
+/**
+* Initialize this file
+*
+* @param in_filename
+* @param out_failure_code
+*
+* @error out_failure_code is NULL
+* @error in_filename is null
+* @error internal_context_is_initialize() failed
+* @error malloc() failed
+*
+* @return TRUE in success, FALSE otherwise
+*/
 extern t_bool		ft_read_initialize (t_cpchar			in_filename,
 										t_failure_code		*out_failure_code)
 {
