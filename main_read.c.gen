@@ -151,6 +151,7 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 	n = 0;
 	while (n < 4)
 	{
+		tetriminos_point[n] = tetriminos_point[n] - tetriminos_point_min;
 		if (n != 0 && tetriminos_point[n] <= tetriminos_point[n - 1])
 			i = i + 1;
 
