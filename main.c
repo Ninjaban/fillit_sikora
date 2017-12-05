@@ -2,41 +2,26 @@
 // Created by Nathan on 04/12/17.
 //
 
-#include "types.h.gen"
 #include "error.h.gen"
-
+#include "types.h"
 #include "fillit.h"
-
-#include "main_read.h.gen"
+#include "main_read.h"
 
 int main(int ac, char **av)
 {
 	t_tetris			*tetris;
-	t_failure_code		failure_code;
 
 	if (ac == 1)
 		return 1;
-
-	if (! ft_read_initialize(av[1], &failure_code))
+	if (! ft_read(av[1], &tetris))
 	{
-		FT_WARNING("ft_read_initialize() failed failure_code %" PRIu64, failure_code);
-
+		FT_ERROR("ft_read() failed %s", "");
 		return 1;
 	}
-
-	if (! ft_read(&tetris, &failure_code))
+	while (tetris)
 	{
-		FT_WARNING("ft_read() failed failure_code %" PRIu64, failure_code);
-
-		return 1;
+		FT_WARNING("tetris number %" PRIu32 " height %" PRIu32 " width %" PRIu32, tetris->number, tetris->height, tetris->width);
+		tetris = tetris->next;
 	}
-
-	if (! ft_read_finalize(&failure_code))
-	{
-		FT_WARNING("ft_read_finalize() failed failure_code %" PRIu64, failure_code);
-
-		return 1;
-	}
-
 	return 0;
 }

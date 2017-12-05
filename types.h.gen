@@ -5,9 +5,6 @@
 #ifndef FILLIT_TYPES_H
 #define FILLIT_TYPES_H
 
-#include <stdint.h>		/* |uint64_t| */
-
-/* In an specific file named type.h: */
 #define TRUE		1
 #define FALSE		0
 
