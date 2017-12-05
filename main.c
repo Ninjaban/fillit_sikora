@@ -2,12 +2,12 @@
 // Created by Nathan on 04/12/17.
 //
 
-#include "types.h"
-#include "error.h"
+#include "types.h.gen"
+#include "error.h.gen"
 
 #include "fillit.h"
 
-#include "read_main.h"
+#include "main_read.h.gen"
 
 int main(int ac, char **av)
 {
