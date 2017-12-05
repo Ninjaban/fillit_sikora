@@ -80,6 +80,8 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 	t_uint			n;
 
 
+	FT_DEBUG("Tetrimino to treat : \n{%.*s}", 21, in_file_content);
+
 	/* init tetriminos_lst */
 	if (! (tetriminos_lst = malloc (sizeof (t_tetris))))
 	{
@@ -104,7 +106,7 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 			tetriminos_point[n++] = i;
 		i = i + 1;
 	}
-	tetriminos_lst->height = (tetriminos_point[3] - tetriminos_point[0]) / 5 + 1;
+	tetriminos_lst->height = ((tetriminos_point[3] / 5) - (tetriminos_point[0] / 5)) + 1;
 
 	n = 0;
 	tetriminos_point_max = 0;
@@ -145,6 +147,7 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 		i = i + 1;
 	}
 
+	FT_DEBUG("tetriminos struct {height %" PRIu32 ", width %" PRIu32 "}", tetriminos_lst->height, tetriminos_lst->width);
 
 	/* set char ** */
 	i = 0;
@@ -155,6 +158,8 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 		if (n != 0 && tetriminos_point[n] <= tetriminos_point[n - 1])
 			i = i + 1;
 
+		FT_DEBUG("Tetrimino point number %" PRIu32 " value %" PRIu32 " line %" PRIu32, n, tetriminos_point[n], i);
+
 		tetriminos_lst->tetriminos[i][tetriminos_point[n]] = '#';
 
 		n = n + 1;
@@ -163,13 +168,12 @@ static t_bool		internal_stock_file_content_in_tetris_list (t_cpchar			in_file_co
 
 	FT_DEBUG("tetriminos struct {number %" PRIu32 ", height %" PRIu32 ", width %" PRIu32 "}", tetriminos_lst->number, tetriminos_lst->height, tetriminos_lst->width);
 
+	/* Create next part of the list */
 	if (in_file_content[20] == '\n')
 	{
 		if (!internal_stock_file_content_in_tetris_list(in_file_content + 21, in_tetriminos_id + 1, &tetriminos_lst->next, out_failure_code))
 		{
-			FT_WARNING (
-					"internal_stock_file_content_in_tetris_list() failed id %d content {%.*s}",
-					in_tetriminos_id + 1, 21, in_file_content);
+			FT_WARNING ("internal_stock_file_content_in_tetris_list() failed id %d content {%.*s}", in_tetriminos_id + 1, 21, in_file_content);
 
 			/* out_failure_code is set in the internal function */
 			return FALSE;
