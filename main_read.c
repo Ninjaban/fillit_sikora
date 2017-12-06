@@ -95,6 +95,7 @@ static t_bool		internal_stock_file_content (t_cpchar in_file_content,
 	(*out_tetriminos_lst)->next = NULL;
 	if (!(tetriminos_point = malloc(sizeof (t_uint) * 4)))
 		return (FALSE);
+	tetriminos_point_min = 4;
 	internal_get_size(in_file_content, &tetriminos_point_min,
 					  &tetriminos_point, out_tetriminos_lst);
 	if (!internal_create_tab(tetriminos_point, tetriminos_point_min,

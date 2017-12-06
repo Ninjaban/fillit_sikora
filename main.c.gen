@@ -1,0 +1,53 @@
+//
+// Created by Nathan on 04/12/17.
+//
+
+#include "types.h.gen"
+#include "error.h.gen"
+
+#include "fillit.h"
+
+#include "main_read.h.gen"
+
+int main(int ac, char **av)
+{
+	t_tetris			*tetris;
+	t_failure_code		failure_code;
+	t_uint				n;
+
+
+	if (ac == 1)
+		return 1;
+
+	if (! ft_read_initialize(av[1], &failure_code))
+	{
+		FT_WARNING("ft_read_initialize() failed failure_code %" PRIu64, failure_code);
+
+		return 1;
+	}
+
+	if (! ft_read(&tetris, &failure_code))
+	{
+		FT_WARNING("ft_read() failed failure_code %" PRIu64, failure_code);
+
+		return 1;
+	}
+
+	if (! ft_read_finalize(&failure_code))
+	{
+		FT_WARNING("ft_read_finalize() failed failure_code %" PRIu64, failure_code);
+
+		return 1;
+	}
+
+	while (tetris)
+	{
+		FT_WARNING("tetris number %" PRIu32 " height %" PRIu32 " width %" PRIu32, tetris->number, tetris->height, tetris->width);
+		n = 0;
+		while (n < tetris->height)
+			FT_WARNING("{%.*s}", tetris->width, tetris->tetriminos[n++]);
+		tetris = tetris->next;
+	}
+
+	return 0;
+}

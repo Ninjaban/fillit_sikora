@@ -10,6 +10,7 @@
 int main(int ac, char **av)
 {
 	t_tetris			*tetris;
+	t_uint				n;
 
 	if (ac == 1)
 		return 1;
@@ -21,6 +22,9 @@ int main(int ac, char **av)
 	while (tetris)
 	{
 		FT_WARNING("tetris number %" PRIu32 " height %" PRIu32 " width %" PRIu32, tetris->number, tetris->height, tetris->width);
+		n = 0;
+		while (n < tetris->height)
+			FT_WARNING("{%.*s}", tetris->width, tetris->tetriminos[n++]);
 		tetris = tetris->next;
 	}
 	return 0;
